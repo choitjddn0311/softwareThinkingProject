@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_레이어_1" data-name="레이어 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 172.74 51.72">
+  <defs>
+    <style>
+      .cls-1 {
+        font-size: 20px;
+      }
+
+      .cls-1, .cls-2 {
+        font-family: Pretendard-Bold-KSCpc-EUC-H, Pretendard;
+        font-weight: 700;
+      }
+
+      .cls-1, .cls-2, .cls-3 {
+        fill: #231815;
+      }
+
+      .cls-4 {
+        fill: #2c2d2d;
+      }
+
+      .cls-2 {
+        font-size: 24px;
+      }
+
+      .cls-5 {
+        fill: #6daad0;
+      }
+
+      .cls-6 {
+        fill: #f7f7f7;
+      }
+
+      .cls-7 {
+        fill: #6fb2db;
+      }
+
+      .cls-3 {
+        font-family: Pretendard-SemiBold-KSCpc-EUC-H, Pretendard;
+        font-size: 3px;
+        font-weight: 600;
+      }
+
+      .cls-8 {
+        fill: #70bae6;
+      }
+    </style>
+  </defs>
+  <g>
+    <g>
+      <g>
+        <path class="cls-6" d="M0,16.72h50v30c0,2.76-2.24,5-5,5H5c-2.76,0-5-2.24-5-5v-30h0Z"/>
+        <path class="cls-8" d="M5,1.72h40c2.76,0,5,2.24,5,5v10H0V6.72C0,3.96,2.24,1.72,5,1.72Z"/>
+      </g>
+      <g>
+        <g>
+          <circle class="cls-5" cx="15.3" cy="5.97" r="1.83"/>
+          <circle class="cls-7" cx="34.7" cy="5.97" r="1.83"/>
+        </g>
+        <rect class="cls-4" x="14.3" y="0" width="2" height="6" rx="1" ry="1"/>
+      </g>
+    </g>
+    <rect class="cls-4" x="33.7" y="0" width="2" height="6" rx="1" ry="1"/>
+    <text class="cls-2" transform="translate(11.61 42.03)"><tspan x="0" y="0">31</tspan></text>
+  </g>
+  <g>
+    <text class="cls-3" transform="translate(60.43 16.1)"><tspan x="0" y="0">날마다 나의 감정을 볼 수 있는 일기</tspan></text>
+    <text class="cls-1" transform="translate(59.81 35.62)"><tspan x="0" y="0">나의 감정 일기</tspan></text>
+  </g>
+</svg>
