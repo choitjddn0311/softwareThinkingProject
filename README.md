@@ -10,6 +10,6 @@
 - 터미널에서 frontend 폴더까지 들어간다 -> npm run dev를 입력한뒤 브라우저(ex: chrome,safari)에서 localhost:5173을 입력해주면 들어가진다
 - 만약 들어가지지않는다면 문제는 다음과 같을 수도 있다
     - nodejs 미설치<br>
-      ![해결 방법](https://daram-tree.tistory.com/354)
+      [해결 방법](https://daram-tree.tistory.com/354)
     - npm 모듈 미설치
       frontend 폴더로 터미널로 접근한다음 npm install 명령어를 입력하고 다시 수행하면 된다
