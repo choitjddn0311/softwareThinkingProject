@@ -28,14 +28,31 @@ const WritePage = () => {
   const [content, setContent] = useState('');
   const [emotion, setEmotion] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!title.trim())   { alert('제목을 입력해주세요.'); return; }
     if (!content.trim()) { alert('내용을 입력해주세요.'); return; }
     if (!emotion)        { alert('감정을 선택해주세요.'); return; }
 
-    // 저장 로직은 부모 앱에 맞게 연결하세요
-    console.log({ date, title, content, emotion });
-    navigate('/');
+    try {
+      const response = await fetch('/api/diaries', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ date, title, content, emotion }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(errorData.error || '저장에 실패했습니다.');
+        return;
+      }
+
+      navigate('/');
+    } catch (error) {
+      console.error('저장 중 오류 발생:', error);
+      alert('서버와의 연결에 실패했습니다.');
+    }
   };
 
   return (
