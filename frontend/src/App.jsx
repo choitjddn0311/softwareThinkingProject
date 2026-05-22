@@ -12,6 +12,7 @@ const App = () => {
         <Route path='/' element={<CalendarPage />} />
         <Route path='/write' element={<WritePage />}/>
         <Route path='/read' element={<ReadPage />}/>
+        <Route path='/day/:date' element={<ReadPage />}/>
       </Routes>
     </BrowserRouter>
   )

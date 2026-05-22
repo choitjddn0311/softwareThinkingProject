@@ -104,6 +104,32 @@ def delete_diary(diary_id):
 
     return jsonify({"message": "일기가 삭제되었습니다"}), 200
 
+# [READ] 특정 날짜 일기 조회
+@diary_bp.route('/api/diaries/<date>', methods=['GET'])
+def read_diary_by_date(date):
+    conn = sqlite3.connect('diary.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM diaries WHERE date=?', (date,))
+    rows = c.fetchall()
+    conn.close()
+
+    if len(rows) == 0:
+        return jsonify({"message": f"이날({date})에는 작성한 일기가 없습니다"}), 200
+
+    diary_list = []
+    for row in rows:
+        diary_list.append({
+            "id": row[0],
+            "title": row[1],
+            "date": row[2],
+            "emotion": row[3],
+            "content": row[4],
+            "color": row[5]
+        })
+
+    return jsonify(diary_list), 200
+
+# [READ] 캘린더용 색상 데이터
 # [READ] 캘린더용 색상 데이터
 @diary_bp.route('/api/calendar', methods=['GET'])
 def get_calendar_colors():
