@@ -69,6 +69,27 @@ def read_diaries():
 
     return jsonify(diary_list), 200
 
+# [READ] 특정 날짜 일기 조회
+@diary_bp.route('/api/diaries/date/<string:date>', methods=['GET'])
+def get_diary_by_date(date):
+    conn = sqlite3.connect('diary.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM diaries WHERE date = ?', (date,))
+    row = c.fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify(False), 200
+
+    return jsonify({
+        "id": row[0],
+        "title": row[1],
+        "date": row[2],
+        "emotion": row[3],
+        "content": row[4],
+        "color": row[5]
+    }), 200
+
 # [UPDATE] 일기 수정
 @diary_bp.route('/api/diaries/<int:diary_id>', methods=['PUT'])
 def update_diary(diary_id):
@@ -109,7 +130,7 @@ def delete_diary(diary_id):
 def get_calendar_colors():
     conn = sqlite3.connect('diary.db')
     c = conn.cursor()
-    c.execute('SELECT date, emotion, color FROM diaries')
+    c.execute('SELECT date, emotion, color, title FROM diaries')  # title 추가
     rows = c.fetchall()
     conn.close()
 
@@ -118,7 +139,8 @@ def get_calendar_colors():
         calendar_data.append({
             "date": row[0],
             "emotion": row[1],
-            "color": row[2]
+            "color": row[2],
+            "title": row[3]
         })
 
     return jsonify(calendar_data), 200
