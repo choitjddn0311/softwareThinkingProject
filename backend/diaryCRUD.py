@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 import sqlite3
 from emotioncolor import get_color
 
@@ -15,25 +15,32 @@ def init_db():
         conn.execute('''
             CREATE TABLE IF NOT EXISTS diaries (
                 id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id   INTEGER NOT NULL DEFAULT 0,
                 title     TEXT NOT NULL,
-                date      TEXT NOT NULL UNIQUE,
+                date      TEXT NOT NULL,
                 emotion   TEXT NOT NULL,
                 content   TEXT NOT NULL,
                 color     TEXT NOT NULL,
                 wake_time  TEXT DEFAULT '',
-                sleep_time TEXT DEFAULT ''
+                sleep_time TEXT DEFAULT '',
+                UNIQUE(user_id, date)
             )
         ''')
         # 기존 DB에 컬럼이 없으면 추가 (마이그레이션)
-        try:
-            conn.execute("ALTER TABLE diaries ADD COLUMN wake_time TEXT DEFAULT ''")
-        except Exception:
-            pass
-        try:
-            conn.execute("ALTER TABLE diaries ADD COLUMN sleep_time TEXT DEFAULT ''")
-        except Exception:
-            pass
+        for col, definition in [
+            ('wake_time',  "TEXT DEFAULT ''"),
+            ('sleep_time', "TEXT DEFAULT ''"),
+            ('user_id',    'INTEGER NOT NULL DEFAULT 0'),
+        ]:
+            try:
+                conn.execute(f"ALTER TABLE diaries ADD COLUMN {col} {definition}")
+            except Exception:
+                pass
         conn.commit()
+
+
+def current_user_id():
+    return session.get('user_id')
 
 
 def row_to_dict(row):
@@ -52,6 +59,10 @@ def row_to_dict(row):
 # [CREATE] 일기 저장
 @diary_bp.route('/api/diaries', methods=['POST'])
 def create_diary():
+    uid = current_user_id()
+    if not uid:
+        return jsonify({"error": "로그인이 필요합니다"}), 401
+
     data      = request.get_json() or {}
     title     = (data.get('title')     or '').strip()
     date      = (data.get('date')      or '').strip()
@@ -67,9 +78,9 @@ def create_diary():
 
     with get_db() as conn:
         conn.execute(
-            '''INSERT INTO diaries (title, date, emotion, content, color, wake_time, sleep_time)
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
-            (title, date, emotion, content, color, wake_time, sleep_time)
+            '''INSERT INTO diaries (user_id, title, date, emotion, content, color, wake_time, sleep_time)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            (uid, title, date, emotion, content, color, wake_time, sleep_time)
         )
         conn.commit()
 
@@ -79,16 +90,22 @@ def create_diary():
 # [READ] 전체 일기 조회
 @diary_bp.route('/api/diaries', methods=['GET'])
 def read_diaries():
+    uid = current_user_id()
+    if not uid:
+        return jsonify({"error": "로그인이 필요합니다"}), 401
     with get_db() as conn:
-        rows = conn.execute('SELECT * FROM diaries ORDER BY date DESC').fetchall()
+        rows = conn.execute('SELECT * FROM diaries WHERE user_id = ? ORDER BY date DESC', (uid,)).fetchall()
     return jsonify([row_to_dict(r) for r in rows]), 200
 
 
 # [READ] 특정 날짜 일기 조회 (단건 — DiaryBook용)
 @diary_bp.route('/api/diaries/date/<string:date>', methods=['GET'])
 def get_diary_by_date(date):
+    uid = current_user_id()
+    if not uid:
+        return jsonify(False), 200
     with get_db() as conn:
-        row = conn.execute('SELECT * FROM diaries WHERE date = ?', (date,)).fetchone()
+        row = conn.execute('SELECT * FROM diaries WHERE user_id = ? AND date = ?', (uid, date)).fetchone()
     if not row:
         return jsonify(False), 200
     return jsonify(row_to_dict(row)), 200
@@ -124,6 +141,10 @@ def update_diary(diary_id):
 # [UPSERT] 날짜 기준 저장 또는 수정 (DiaryBook 저장 버튼용)
 @diary_bp.route('/api/diaries/date/<string:date>', methods=['PUT'])
 def upsert_diary_by_date(date):
+    uid = current_user_id()
+    if not uid:
+        return jsonify({"error": "로그인이 필요합니다"}), 401
+
     data       = request.get_json() or {}
     title      = (data.get('title')     or '').strip()
     emotion    = (data.get('emotion')   or 'meh').strip()
@@ -137,19 +158,19 @@ def upsert_diary_by_date(date):
     color = get_color(emotion)
 
     with get_db() as conn:
-        existing = conn.execute('SELECT id FROM diaries WHERE date = ?', (date,)).fetchone()
+        existing = conn.execute('SELECT id FROM diaries WHERE user_id = ? AND date = ?', (uid, date)).fetchone()
         if existing:
             conn.execute(
                 '''UPDATE diaries
                    SET title=?, emotion=?, content=?, color=?, wake_time=?, sleep_time=?
-                   WHERE date=?''',
-                (title, emotion, content, color, wake_time, sleep_time, date)
+                   WHERE user_id=? AND date=?''',
+                (title, emotion, content, color, wake_time, sleep_time, uid, date)
             )
         else:
             conn.execute(
-                '''INSERT INTO diaries (title, date, emotion, content, color, wake_time, sleep_time)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)''',
-                (title, date, emotion, content, color, wake_time, sleep_time)
+                '''INSERT INTO diaries (user_id, title, date, emotion, content, color, wake_time, sleep_time)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                (uid, title, date, emotion, content, color, wake_time, sleep_time)
             )
         conn.commit()
 
@@ -179,6 +200,9 @@ def read_diary_by_date(date):
 # [READ] 캘린더용 색상 데이터
 @diary_bp.route('/api/calendar', methods=['GET'])
 def get_calendar_colors():
+    uid = current_user_id()
+    if not uid:
+        return jsonify([]), 200
     with get_db() as conn:
-        rows = conn.execute('SELECT date, emotion, color, title FROM diaries').fetchall()
+        rows = conn.execute('SELECT date, emotion, color, title FROM diaries WHERE user_id = ?', (uid,)).fetchall()
     return jsonify([{"date": r["date"], "emotion": r["emotion"], "color": r["color"], "title": r["title"]} for r in rows]), 200
