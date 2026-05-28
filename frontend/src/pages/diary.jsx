@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, forwardRef, useRef } from 'react';
 import HTMLFlipBook from 'react-pageflip';
-import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
+import { IoIosArrowBack, IoIosArrowForward, IoIosCalendar } from 'react-icons/io';
 import diaryCoverImg from '../assets/img/diaryCover.jpeg';
 import diaryBackCoverImg from '../assets/img/diaryBackCover.jpeg';
 import { useAuth } from '../context/AuthContext';
@@ -166,7 +166,7 @@ const CalendarPageComp = forwardRef(({ year, month, colorMap, titleMap, onDayCli
 CalendarPageComp.displayName = 'CalendarPageComp';
 
 // ── 일기 페이지 (그림일기 형식) ───────────────────────
-const DiaryPage = forwardRef(({ year, month, day, isLeft }, ref) => {
+const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref) => {
   const [mode,       setMode]       = useState('read');
   const [loadState,  setLoadState]  = useState('loading');
   const [form,       setForm]       = useState({ title: '', content: '', wakeTime: '', sleepTime: '', emotion: '' });
@@ -257,6 +257,15 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft }, ref) => {
 
       {/* ① 날짜 헤더 */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onGoToCalendar}
+            className="flex items-center gap-1 text-[10px] px-2 py-1 text-gray-500 border border-gray-300 rounded hover:bg-gray-100 transition-all"
+          >
+            <IoIosCalendar size={13} />
+            달력
+          </button>
+        </div>
         <div className="flex items-baseline gap-0.5 text-[11px]">
           <span className="font-medium text-gray-700">{year}</span>
           <span className="text-gray-300 text-[9px] mx-0.5">년</span>
@@ -402,6 +411,7 @@ const DiaryBook = () => {
   const [titleMap, setTitleMap] = useState({});
   const [isReady,  setIsReady]  = useState(false);
   const bookRef = useRef(null);
+  const bookContainerRef = useRef(null);
 
   const year     = current.getFullYear();
   const month    = current.getMonth();
@@ -425,6 +435,10 @@ const DiaryBook = () => {
     bookRef.current?.pageFlip().flip(day + 2);
   };
 
+  const handleGoToCalendar = () => {
+    bookRef.current?.pageFlip().turnToPage(2);
+  };
+
   const changeMonth = (delta) => {
     setIsReady(false);
     setCurrent(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
@@ -436,6 +450,23 @@ const DiaryBook = () => {
     return () => clearTimeout(t);
   }, [year, month]);
 
+  // 책 아래쪽(하단 30%)에서만 페이지 넘김 허용
+  useEffect(() => {
+    const el = bookContainerRef.current;
+    if (!el) return;
+    const INTERACTIVE = ['BUTTON', 'INPUT', 'TEXTAREA', 'SELECT', 'A'];
+    const block = (e) => {
+      if (INTERACTIVE.includes(e.target.tagName)) return;
+      const rect = el.getBoundingClientRect();
+      if ((e.clientY - rect.top) / rect.height < 0.7) {
+        e.stopPropagation();
+      }
+    };
+    const EVENTS = ['mousedown', 'mousemove', 'pointermove', 'pointerdown'];
+    EVENTS.forEach(ev => el.addEventListener(ev, block, true));
+    return () => EVENTS.forEach(ev => el.removeEventListener(ev, block, true));
+  }, [isReady]);
+
   // showCover=true 사용 시 총 페이지 수는 짝수여야 함
   // 구성: 1(표지) + 1(공백) + 1(달력) + lastDate + 1(뒷표지) = lastDate + 4
   const needsPad = (lastDate + 4) % 2 !== 0;
@@ -443,27 +474,15 @@ const DiaryBook = () => {
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center py-8 bg-gray-100">
 
-      {/* 월 이동 컨트롤 */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => changeMonth(-1)}
-          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition-all"
-        >
-          <IoIosArrowBack size={14} />
-        </button>
+      {/* 월 표시 */}
+      <div className="flex items-center mb-6">
         <span className="text-sm font-medium text-gray-500 w-24 text-center">
           {year}년 {month + 1}월
         </span>
-        <button
-          onClick={() => changeMonth(1)}
-          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition-all"
-        >
-          <IoIosArrowForward size={14} />
-        </button>
       </div>
 
       {/* 초기화 중에는 표지 이미지를 오버레이로 덮어 빈 화면 방지 */}
-      <div className="relative">
+      <div className="relative" ref={bookContainerRef}>
         {!isReady && (
           <div
             className="absolute inset-0 z-10 overflow-hidden shadow-2xl"
@@ -487,6 +506,7 @@ const DiaryBook = () => {
           drawShadow={true}
           flippingTime={650}
           usePortrait={false}
+          showPageCorners={false}
           className="shadow-2xl"
           onInit={() => setIsReady(true)}
         >
@@ -506,6 +526,7 @@ const DiaryBook = () => {
               month={month}
               day={day}
               isLeft={day % 2 === 1}
+              onGoToCalendar={handleGoToCalendar}
             />
           ))}
           {needsPad ? <BlankPage /> : null}
