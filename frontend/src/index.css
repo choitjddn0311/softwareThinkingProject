@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@font-face {
+  font-family: 'MunmakHaeban';
+  src: url('./assets/fonts/MUNMAK_HAEBANCHE.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+  font-family: 'MunmakHaeban', sans-serif;
+}

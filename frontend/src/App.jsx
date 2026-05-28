@@ -1,23 +1,45 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Header from './component/header'
-import CalendarPage from './pages/calender'
-import WritePage from './pages/writeDiary'
-import ReadPage from './pages/readDiary'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import Header from './component/header';
+import RegisterPage from './pages/register';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import DiaryBook from './pages/diary';
+
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  return user ? children : <Navigate to="/register" replace />;
+};
+
+const Layout = () => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  const hideHeader = location.pathname === '/register';
+
+  return (
+    <>
+      {!hideHeader && <Header />}
+      <Routes>
+        <Route path='/' element={
+          <ProtectedRoute>
+            <DiaryBook />
+          </ProtectedRoute>
+        } />
+        <Route path='/register' element={
+          loading ? null : user ? <Navigate to="/" replace /> : <RegisterPage />
+        } />
+      </Routes>
+    </>
+  );
+};
 
 const App = () => {
-  return(
-    <BrowserRouter>
-      <Header />
-      <Routes>
-        <Route path='/' element={<CalendarPage />} />
-        <Route path='/write' element={<WritePage />}/>
-<<<<<<< HEAD
-=======
-        <Route path='/read' element={<ReadPage />}/>
->>>>>>> 57137bccc9b5ddc674abc30b2fcf0392e928e979
-        <Route path='/day/:date' element={<ReadPage />}/>
-      </Routes>
-    </BrowserRouter>
-  )
-}
+  return (
+    <AuthProvider>       {/* ← BrowserRouter 바깥으로 */}
+      <BrowserRouter>
+        <Layout />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+};
+
 export default App;

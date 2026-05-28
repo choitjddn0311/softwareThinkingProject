@@ -1,27 +1,53 @@
-import { Link,useLocation } from "react-router-dom";
-import { SlCalender } from "react-icons/sl";
-import Logo from "../assets/img/emotion-logo.svg"
+import { Link, useNavigate } from "react-router-dom";
+import Logo from "../assets/img/logo.png";
+import { useAuth } from "../context/AuthContext";
 
 const Header = () => {
-    const location = useLocation();
-    const isWritePage = location.pathname === '/write';
-    
-    return(
-        <header className="w-full h-20 flex justify-center items-center">
-            <div className="w-[1200px] h-full flex justify-between items-center">
-                <h1>
-                    <Link to='/'>
-                        <img src={Logo} alt="ㅣㅣ" width={200} height={100} />
-                    </Link>
-                </h1>
-                <button className="h-10 text-gray-200 font-bold hover:cursor-pointer hover:text-gray-900">
-                    <Link to={isWritePage ? '/' : '/write'}>
-                        {isWritePage ? '홈으로' : '일기 쓰기'}
-                    </Link>
-                </button>
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
+
+    const handleLogout = async () => {
+        await logout();
+        navigate('/register');
+    };
+
+    return (
+        <header className="w-full h-16 flex justify-center items-center border-b border-gray-100">
+            <div className="w-[1200px] h-full flex justify-between items-center px-6">
+
+                <Link to='/'>
+                    <img src={Logo} alt="logo" width={40} height={40} />
+                </Link>
+
+                <div className="flex items-center gap-1">
+
+                    {user ? (
+                        <div className="flex items-center gap-1">
+                            <span className="h-8 px-4 flex items-center text-xs font-medium text-gray-700">
+                                {user.username}
+                            </span>
+
+                            <div className="w-px h-3.5 bg-gray-200 mx-1" />
+
+                            <button
+                                onClick={handleLogout}
+                                className="h-8 px-4 flex items-center text-xs font-medium text-gray-400 rounded-md hover:text-gray-800 hover:bg-gray-100 transition-all cursor-pointer"
+                            >
+                                로그아웃
+                            </button>
+                        </div>
+                    ) : (
+                        <Link
+                            to='/register'
+                            className="h-8 px-4 flex items-center text-xs font-medium text-gray-400 rounded-md hover:text-gray-800 hover:bg-gray-100 transition-all"
+                        >
+                            로그인
+                        </Link>
+                    )}
+                </div>
             </div>
         </header>
-    )
-}
+    );
+};
 
 export default Header;

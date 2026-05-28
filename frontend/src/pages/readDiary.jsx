@@ -1,127 +1,123 @@
-<<<<<<< HEAD
-import { useParams, useLocation } from 'react-router-dom';
+// /*
+// import { useParams, useNavigate } from 'react-router-dom';
+// import { useState, useEffect } from 'react';
+// import { IoIosArrowBack } from 'react-icons/io';
 
-const ReadPage = () => {
-  const { date } = useParams();        // "2026-05-02"
-  const { state } = useLocation();
-  const diary = state?.diary;          // false 또는 일기 객체
+// const EMOTION_LABELS = {
+//   happy:   '행복함',
+//   sad:     '슬픔',
+//   blue:    '우울',
+//   angry:   '화남',
+//   annoyed: '짜증남',
+//   meh:     '그저그럼',
+// };
 
-  const [year, month, day] = date.split('-');
-  const displayDate = `${year}.${month}.${day}`;
+// const ReadPage = () => {
+//   const { date } = useParams();
+//   const navigate = useNavigate();
+//   const [diaries, setDiaries] = useState([]);
+//   const [isEmpty, setIsEmpty] = useState(false);ㅌ3
+//   const [loading, setLoading] = useState(true);
 
-  return (
-    <div className="p-6">
-      <h2 className="text-lg font-semibold text-gray-700 mb-4">{displayDate}</h2>
+//   const formattedDate = date ? date.replace(/-/g, '.') : '';
 
-      {!diary ? (
-        <p className="text-gray-400">
-          ({displayDate})에는 작성된 일기가 없어요.
-        </p>
-      ) : (
-        <div>
-          <h3 className="text-xl font-bold">{diary.title}</h3>
-          <p className="text-sm text-gray-500">{diary.emotion}</p>
-          <p className="mt-2 text-gray-700">{diary.content}</p>
-        </div>
-      )}
-=======
-import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { IoIosArrowBack } from 'react-icons/io';
+//   useEffect(() => {
+//     if (!date) return;
+//     fetch(`/api/diaries/${date}`)
+//       .then(res => res.json())
+//       .then(data => {
+//         if (Array.isArray(data)) {
+//           setDiaries(data);
+//           setIsEmpty(false);
+//         } else {
+//           setDiaries([]);
+//           setIsEmpty(true);
+//         }
+//       })
+//       .catch(() => setIsEmpty(true))
+//       .finally(() => setLoading(false));
+//   }, [date]);
 
-const EMOTION_LABELS = {
-  happy:   '행복함',
-  sad:     '슬픔',
-  blue:    '우울',
-  angry:   '화남',
-  annoyed: '짜증남',
-  meh:     '그저그럼',
-};
+//   return (
+//     <div className="w-full h-full flex items-start justify-center">
+//       <div className="w-[780px]">
 
-const ReadPage = () => {
-  const { date } = useParams();
-  const navigate = useNavigate();
-  const [diaries, setDiaries] = useState([]);
-  const [isEmpty, setIsEmpty] = useState(false);
-  const [loading, setLoading] = useState(true);
+//         {/* 헤더 */}
+//         <div className="flex items-center gap-3 py-5 border-b border-gray-100">
+//           <button
+//             onClick={() => navigate('/')}
+//             className="w-7 h-7 flex items-center justify-center rounded-md text-gray-300 hover:text-gray-700 hover:bg-gray-100 transition-all hover:cursor-pointer"
+//           >
+//             <IoIosArrowBack size={14} />
+//           </button>
+//           <h2 className="text-sm font-medium text-gray-800 tracking-tight">
+//             {formattedDate}
+//           </h2>
+//         </div>
 
-  const formattedDate = date ? date.replace(/-/g, '.') : '';
+//         {/* 본문 */}
+//         <div className="py-10">
+//           {loading ? (
+//             <p className="text-center text-gray-300 text-xs mt-20">불러오는 중...</p>
+//           ) : isEmpty ? (
+//             <div className="flex flex-col items-center gap-3 mt-24">
+//               <p className="text-gray-300 text-xs">{formattedDate}</p>
+//               <p className="text-gray-400 text-sm">작성된 일기가 없습니다</p>
+//               <button
+//                 onClick={() => navigate('/write')}
+//                 className="mt-4 h-8 px-4 text-xs font-medium text-gray-400 border border-gray-200 rounded-md hover:text-gray-800 hover:border-gray-400 transition-all"
+//               >
+//                 일기 쓰기
+//               </button>
+//             </div>
+//           ) : (
+//             <div className="flex flex-col gap-4">
+//               {diaries.map(diary => (
+//                 <div
+//                   key={diary.id}
+//                   className="rounded-lg border border-gray-100 overflow-hidden"
+//                 >
+//                   {/* 컬러 바 */}
+//                   <div className="h-px w-full" style={{ backgroundColor: diary.color }} />
 
-  useEffect(() => {
-    if (!date) return;
-    fetch(`/api/diaries/${date}`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setDiaries(data);
-          setIsEmpty(false);
-        } else {
-          setDiaries([]);
-          setIsEmpty(true);
-        }
-      })
-      .catch(() => setIsEmpty(true))
-      .finally(() => setLoading(false));
-  }, [date]);
+//                   <div className="px-7 py-6 flex flex-col gap-4">
+//                     {/* 감정 태그 */}
+//                     <span className="text-[11px] font-medium tracking-widest uppercase text-gray-300">
+//                       {EMOTION_LABELS[diary.emotion] ?? diary.emotion}
+//                     </span>
 
-  return (
-    <div className="w-full h-full flex items-start justify-center">
-      <div className="w-[1200px]">
+//                     {/* 제목 */}
+//                     <h3 className="text-lg font-medium text-gray-800 leading-snug">
+//                       {diary.title}
+//                     </h3>
 
-        {/* 헤더 */}
-        <div className="flex items-center py-3 border-b border-gray-100">
-          <button
-            onClick={() => navigate('/')}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-900 hover:cursor-pointer transition-colors"
-          >
-            <IoIosArrowBack />
-          </button>
-          <h2 className="ml-3 text-lg font-semibold text-gray-800 tracking-tight">
-            {formattedDate}
-          </h2>
-        </div>
+//                     {/* 구분선 */}
+//                     <div className="w-8 h-px bg-gray-100" />
 
-        {/* 본문 */}
-        <div className="py-8">
-          {loading ? (
-            <p className="text-center text-gray-400 text-sm mt-20">불러오는 중...</p>
-          ) : isEmpty ? (
-            <p className="text-center text-gray-400 text-sm mt-20">
-              이날({formattedDate})에는 작성한 일기가 없습니다
-            </p>
-          ) : (
-            <div className="flex flex-col gap-5">
-              {diaries.map(diary => (
-                <div
-                  key={diary.id}
-                  className="rounded-xl border border-gray-100 overflow-hidden"
-                >
-                  <div className="h-1.5 w-full" style={{ backgroundColor: diary.color }} />
-                  <div className="px-6 py-5 flex flex-col gap-3">
-                    <span className="text-xs font-medium tracking-widest uppercase text-gray-400">
-                      {EMOTION_LABELS[diary.emotion] ?? diary.emotion}
-                    </span>
-                    <h3 className="text-xl font-semibold text-gray-800">
-                      {diary.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm font-light leading-relaxed whitespace-pre-wrap">
-                      {diary.content}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+//                     {/* 본문 */}
+//                     <p className="text-gray-500 text-sm font-light leading-relaxed whitespace-pre-wrap">
+//                       {diary.content}
+//                     </p>
+//                   </div>
 
-      </div>
->>>>>>> 57137bccc9b5ddc674abc30b2fcf0392e928e979
-    </div>
-  );
-};
+//                   {/* 하단 컬러 도트 */}
+//                   <div className="px-7 py-4 flex items-center gap-2 border-t border-gray-100">
+//                     <div
+//                       className="w-1.5 h-1.5 rounded-full"
+//                       style={{ backgroundColor: diary.color }}
+//                     />
+//                     <span className="text-[11px] text-gray-300">{formattedDate}</span>
+//                   </div>
+//                 </div>
+//               ))}
+//             </div>
+//           )}
+//         </div>
 
-<<<<<<< HEAD
-export default ReadPage;
-=======
-export default ReadPage;
->>>>>>> 57137bccc9b5ddc674abc30b2fcf0392e928e979
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default ReadPage;
+// */
