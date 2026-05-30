@@ -1,0 +1,104 @@
+import urllib.parse
+import urllib.request
+import ssl
+import random
+import os
+import uuid
+import json
+from flask import Blueprint, request, jsonify, session, send_from_directory
+
+image_bp = Blueprint('image', __name__)
+
+# 이미지 저장 폴더
+IMAGE_DIR = os.path.join(os.path.dirname(__file__), 'diary_images')
+os.makedirs(IMAGE_DIR, exist_ok=True)
+
+EMOTION_EXPRESSIONS = {
+    'happy':     'happy smiling expression, cheerful',
+    'sad':       'sad tearful expression, gloomy',
+    'angry':     'angry pouting expression, frustrated',
+    'annoyed':   'annoyed frowning expression, irritated',
+    'lethargic': 'sleepy drowsy expression, tired',
+}
+
+def translate_to_english(text):
+    """Google Translate 무료 엔드포인트로 한국어 → 영어 번역 (API 키 불필요)"""
+    try:
+        url = (
+            "https://translate.googleapis.com/translate_a/single"
+            f"?client=gtx&sl=ko&tl=en&dt=t&q={urllib.parse.quote(text)}"
+        )
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
+            result = json.loads(response.read())
+            translated = ''.join([item[0] for item in result[0] if item[0]])
+            return translated
+    except Exception as e:
+        print(f"[번역 실패] {e}")
+        return text
+
+
+# 저장된 이미지 파일 서빙
+@image_bp.route('/api/image-file/<filename>')
+def serve_image_file(filename):
+    return send_from_directory(IMAGE_DIR, filename)
+
+
+@image_bp.route('/api/generate-image', methods=['POST'])
+def generate_image():
+    if 'user_id' not in session:
+        return jsonify({"error": "로그인이 필요합니다"}), 401
+
+    data = request.get_json() or {}
+    emotion = (data.get('emotion') or '').strip()
+    title   = (data.get('title')   or '').strip()
+    content = (data.get('content') or '').strip()
+
+    expression = EMOTION_EXPRESSIONS.get(emotion, 'neutral expression')
+
+    # 한국어 일기 내용 → 영어 번역
+    korean_text = f"{title}. {content}" if title and content else title or content or 'daily life'
+    print(f"[번역 중...] {korean_text}")
+    english_scene = translate_to_english(korean_text)
+    print(f"[번역 완료] {english_scene}")
+
+    seed = random.randint(1, 99999)
+    prompt = (
+        f"child's crayon drawing, drawn by a kindergartener, "
+        f"naive childlike art style, simple rough colorful lines, "
+        f"scene: {english_scene}, character with {expression}, "
+        f"hand-drawn diary illustration"
+    )
+
+    encoded = urllib.parse.quote(prompt)
+    pollinations_url = f"https://image.pollinations.ai/prompt/{encoded}?width=512&height=512&nologo=true&seed={seed}"
+
+    print(f"[이미지 생성 중...] prompt: {prompt}")
+
+    try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        req = urllib.request.Request(
+            pollinations_url,
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        with urllib.request.urlopen(req, timeout=90, context=ctx) as response:
+            image_data = response.read()
+
+        filename = f"{uuid.uuid4()}.jpg"
+        filepath = os.path.join(IMAGE_DIR, filename)
+        with open(filepath, 'wb') as f:
+            f.write(image_data)
+
+        local_url = f"/api/image-file/{filename}"
+        print(f"[이미지 저장 완료] {local_url}")
+        return jsonify({"image_url": local_url, "prompt": prompt}), 200
+
+    except Exception as e:
+        print(f"[이미지 생성 실패] {e}")
+        return jsonify({"image_url": pollinations_url, "prompt": prompt}), 200
