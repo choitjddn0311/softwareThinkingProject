@@ -12,3 +12,6 @@ backend/diary_images/
 
 # macOS
 .DS_Store
+
+#env
+.env
