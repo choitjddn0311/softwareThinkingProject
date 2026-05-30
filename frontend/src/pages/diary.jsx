@@ -167,10 +167,12 @@ CalendarPageComp.displayName = 'CalendarPageComp';
 
 // ── 일기 페이지 (그림일기 형식) ───────────────────────
 const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref) => {
-  const [mode,       setMode]       = useState('read');
-  const [loadState,  setLoadState]  = useState('loading');
-  const [form,       setForm]       = useState({ title: '', content: '', wakeTime: '', sleepTime: '', emotion: '' });
-  const [saveStatus, setSaveStatus] = useState('');
+  const [mode,         setMode]         = useState('read');
+  const [loadState,    setLoadState]    = useState('loading');
+  const [form,         setForm]         = useState({ title: '', content: '', wakeTime: '', sleepTime: '', emotion: '' });
+  const [saveStatus,   setSaveStatus]   = useState('');
+  const [imageUrl,     setImageUrl]     = useState('');
+  const [imageLoading, setImageLoading] = useState(false);
 
   const dateStr  = toDateStr(year, month, day);
   const dayLabel = getDayLabel(year, month, day);
@@ -209,6 +211,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref)
         if (cancelled) return;
         if (d?.id) {
           setForm({ title: d.title || '', content: d.content || '', wakeTime: d.wakeTime || '', sleepTime: d.sleepTime || '', emotion: d.emotion || '' });
+          setImageUrl(d.imageUrl || '');
           setLoadState('loaded');
         } else {
           setForm({ title: '', content: '', wakeTime: '', sleepTime: '', emotion: '' });
@@ -238,6 +241,30 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref)
         setLoadState('loaded');
         setSaveStatus('저장됨');
         setTimeout(() => { setSaveStatus(''); setMode('read'); }, 700);
+
+        // 이미지 자동 생성 (백엔드가 실제 생성 완료까지 기다린 후 URL 반환)
+        setImageLoading(true);
+        setImageUrl('');
+        fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: form.content, emotion: form.emotion, title: form.title }),
+        })
+          .then(r => r.json())
+          .then(imgData => {
+            if (!imgData.image_url) { setImageLoading(false); return; }
+            const url = imgData.image_url;
+            // 백엔드가 이미지 생성 완료를 확인했으므로 바로 표시
+            setImageUrl(url);
+            setImageLoading(false);
+            // DB에 URL 저장
+            fetch(`/api/diaries/date/${dateStr}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ title: form.title, content: form.content, emotion: form.emotion, wakeTime: form.wakeTime, sleepTime: form.sleepTime, imageUrl: url }),
+            });
+          })
+          .catch(() => setImageLoading(false));
       } else {
         setSaveStatus(result.error || '저장 실패');
         setTimeout(() => setSaveStatus(''), 2000);
@@ -357,19 +384,45 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref)
 
       {/* ④ 그림 공간 */}
       <div className="flex-1 border-b border-gray-200 flex-shrink-0 h-80">
-        <div className="w-full h-full border border-dashed border-gray-200 m-0 flex items-center justify-center relative">
+        <div className="w-full h-full border border-dashed border-gray-200 m-0 flex items-center justify-center relative overflow-hidden">
           {loadState === 'loading' ? (
             <p className="text-[10px] text-gray-300">불러오는 중...</p>
-          ) : loadState === 'empty' && !isEdit ? (
-            <div className="flex flex-col items-center gap-2">
-              <p className="text-[10px] text-gray-300">아직 작성된 일기가 없어요</p>
-              <button onClick={() => setMode('edit')}
-                className="text-[10px] px-3 py-1.5 border border-gray-200 text-gray-400 rounded hover:border-gray-400 hover:text-gray-700 transition-all">
-                + 작성하기
-              </button>
-            </div>
           ) : (
-            <p className="text-[10px] text-gray-200 select-none pointer-events-none">그림</p>
+            <>
+              {/* imageLoading=true 동안 loading 텍스트 표시 */}
+              {imageLoading && (
+                <div className="absolute inset-0 flex items-center justify-center z-10 bg-white">
+                  <p className="text-[10px] text-gray-400 animate-pulse">✏️ 그림 그리는 중...</p>
+                </div>
+              )}
+              {/* imageUrl 있으면 항상 img 렌더 (loading 중엔 invisible로 DOM에 존재 → onLoad 신호 가능) */}
+              {imageUrl ? (
+                <img
+                  key={imageUrl}
+                  src={imageUrl}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  style={imageLoading ? { opacity: 0, position: 'absolute' } : {}}
+                  onLoad={() => setImageLoading(false)}
+                  onError={() => {
+                    setImageUrl('');
+                    setImageLoading(false);
+                  }}
+                />
+              ) : !imageLoading ? (
+                loadState === 'empty' && !isEdit ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-[10px] text-gray-300">아직 작성된 일기가 없어요</p>
+                    <button onClick={() => setMode('edit')}
+                      className="text-[10px] px-3 py-1.5 border border-gray-200 text-gray-400 rounded hover:border-gray-400 hover:text-gray-700 transition-all">
+                      + 작성하기
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-gray-200 select-none pointer-events-none">저장하면 그림이 생성돼요</p>
+                )
+              ) : null}
+            </>
           )}
         </div>
       </div>

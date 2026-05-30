@@ -31,6 +31,7 @@ def init_db():
             ('wake_time',  "TEXT DEFAULT ''"),
             ('sleep_time', "TEXT DEFAULT ''"),
             ('user_id',    'INTEGER NOT NULL DEFAULT 0'),
+            ('image_url',  "TEXT DEFAULT ''"),
         ]:
             try:
                 conn.execute(f"ALTER TABLE diaries ADD COLUMN {col} {definition}")
@@ -53,6 +54,7 @@ def row_to_dict(row):
         "color":      row["color"],
         "wakeTime":   row["wake_time"]  or '',
         "sleepTime":  row["sleep_time"] or '',
+        "imageUrl":   row["image_url"]  or '',
     }
 
 
@@ -151,6 +153,7 @@ def upsert_diary_by_date(date):
     content    = (data.get('content')   or '').strip()
     wake_time  = (data.get('wakeTime')  or '').strip()
     sleep_time = (data.get('sleepTime') or '').strip()
+    image_url  = (data.get('imageUrl')  or '').strip()
 
     if not title or not content:
         return jsonify({"error": "제목과 내용을 입력해주세요"}), 400
@@ -162,15 +165,15 @@ def upsert_diary_by_date(date):
         if existing:
             conn.execute(
                 '''UPDATE diaries
-                   SET title=?, emotion=?, content=?, color=?, wake_time=?, sleep_time=?
+                   SET title=?, emotion=?, content=?, color=?, wake_time=?, sleep_time=?, image_url=?
                    WHERE user_id=? AND date=?''',
-                (title, emotion, content, color, wake_time, sleep_time, uid, date)
+                (title, emotion, content, color, wake_time, sleep_time, image_url, uid, date)
             )
         else:
             conn.execute(
-                '''INSERT INTO diaries (user_id, title, date, emotion, content, color, wake_time, sleep_time)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
-                (uid, title, date, emotion, content, color, wake_time, sleep_time)
+                '''INSERT INTO diaries (user_id, title, date, emotion, content, color, wake_time, sleep_time, image_url)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (uid, title, date, emotion, content, color, wake_time, sleep_time, image_url)
             )
         conn.commit()
 
