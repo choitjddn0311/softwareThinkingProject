@@ -23,6 +23,7 @@ def init_db():
                 color     TEXT NOT NULL,
                 wake_time  TEXT DEFAULT '',
                 sleep_time TEXT DEFAULT '',
+                image_url  TEXT DEFAULT '',
                 UNIQUE(user_id, date)
             )
         ''')
@@ -179,6 +180,22 @@ def upsert_diary_by_date(date):
 
     action = "수정" if existing else "저장"
     return jsonify({"message": f"일기가 {action}되었습니다", "color": color}), 200
+
+
+# [PATCH] 이미지 URL만 업데이트
+@diary_bp.route('/api/diaries/date/<string:date>/image', methods=['PATCH'])
+def update_image_url(date):
+    uid = current_user_id()
+    if not uid:
+        return jsonify({"error": "로그인이 필요합니다"}), 401
+    image_url = (request.get_json() or {}).get('imageUrl', '').strip()
+    with get_db() as conn:
+        conn.execute(
+            'UPDATE diaries SET image_url=? WHERE user_id=? AND date=?',
+            (image_url, uid, date)
+        )
+        conn.commit()
+    return jsonify({"message": "이미지 저장 완료"}), 200
 
 
 # [DELETE] 일기 삭제

@@ -257,11 +257,11 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref)
             // 백엔드가 이미지 생성 완료를 확인했으므로 바로 표시
             setImageUrl(url);
             setImageLoading(false);
-            // DB에 URL 저장
-            fetch(`/api/diaries/date/${dateStr}`, {
-              method: 'PUT',
+            // 이미지 URL만 저장 (일기 내용 덮어쓰기 방지)
+            fetch(`/api/diaries/date/${dateStr}/image`, {
+              method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ title: form.title, content: form.content, emotion: form.emotion, wakeTime: form.wakeTime, sleepTime: form.sleepTime, imageUrl: url }),
+              body: JSON.stringify({ imageUrl: url }),
             });
           })
           .catch(() => setImageLoading(false));
