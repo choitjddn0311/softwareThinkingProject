@@ -1,18 +1,136 @@
-# 소프트웨어적 사고 기말 프로젝트를 위한 repository입니다.
+# 그림일기 다이어리
 
-## 백엔드 연동을 위한 API 명세서
-- /api/diaries (POST) : 일기 작성
-- /api/diaries (GET) : 일기 가져오기
-- /api/diaries/:id (PUT): 일기 수정
-- /api/diaries/:id (DELETE): 일기 삭제
+책처럼 넘기는 페이지 UI로 일기를 작성하고, 저장하면 AI가 일기 내용을 바탕으로 그림을 자동 생성해주는 웹 다이어리 앱입니다.
 
-## 프론트엔드 localhost 키는법
-- 터미널에서 frontend 폴더까지 들어간다 -> npm run dev를 입력한뒤 브라우저(ex: chrome,safari)에서 localhost:5173을 입력해주면 들어가진다
-- 만약 들어가지지않는다면 문제는 다음과 같을 수도 있다
-    - nodejs 미설치<br>
-      [해결 방법](https://daram-tree.tistory.com/354)
-    - npm 모듈 미설치
-      frontend 폴더로 터미널로 접근한다음 npm install 명령어를 입력하고 다시 수행하면 된다
+## 주요 기능
 
+- 회원가입 / 로그인 / 로그아웃
+- 날짜별 일기 작성 (제목, 내용, 감정, 기상·취침 시간)
+- 일기 저장 시 AI 그림 자동 생성 (Pollinations AI)
+- 감정별 색상으로 표시되는 달력 뷰
+- 책 페이지 넘기기 애니메이션 UI
 
-wrswrs
+## 기술 스택
+
+| 구분 | 사용 기술 |
+|------|-----------|
+| Frontend | React 19, Vite, Tailwind CSS, react-pageflip |
+| Backend | Python, Flask, SQLite |
+| 이미지 생성 | Pollinations AI, Google Translate (무료 엔드포인트) |
+
+---
+
+## 실행 방법
+
+### 사전 준비
+
+- [Node.js](https://nodejs.org/) 설치 (v18 이상 권장)
+- [Python](https://www.python.org/) 설치 (v3.10 이상 권장)
+
+---
+
+### 백엔드 실행
+
+```bash
+# 1. 백엔드 폴더로 이동
+cd backend
+
+# 2. 필요 패키지 설치
+pip install flask flask-cors
+
+# 3. 서버 실행
+python app.py
+```
+
+백엔드 서버가 `http://localhost:5000` 에서 실행됩니다.
+
+---
+
+### 프론트엔드 실행
+
+```bash
+# 1. 프론트엔드 폴더로 이동
+cd frontend
+
+# 2. 패키지 설치 (최초 1회)
+npm install
+
+# 3. 개발 서버 실행
+npm run dev
+```
+
+브라우저에서 `http://localhost:5173` 으로 접속합니다.
+
+> 프론트엔드 개발 서버는 `/api` 요청을 자동으로 백엔드(`localhost:5000`)로 프록시합니다.  
+> **백엔드와 프론트엔드를 동시에 실행해야 정상 작동합니다.**
+
+---
+
+## API 명세
+
+### 인증
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/api/auth/register` | 회원가입 |
+| POST | `/api/auth/login` | 로그인 |
+| POST | `/api/auth/logout` | 로그아웃 |
+| GET | `/api/auth/me` | 현재 로그인 사용자 확인 |
+
+### 일기
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/api/diaries` | 일기 작성 |
+| GET | `/api/diaries` | 전체 일기 조회 |
+| GET | `/api/diaries/date/:date` | 특정 날짜 일기 조회 |
+| PUT | `/api/diaries/date/:date` | 날짜 기준 일기 저장 또는 수정 |
+| PATCH | `/api/diaries/date/:date/image` | 이미지 URL만 업데이트 |
+| PUT | `/api/diaries/:id` | ID 기준 일기 수정 |
+| DELETE | `/api/diaries/:id` | 일기 삭제 |
+| GET | `/api/calendar` | 달력용 색상·제목 데이터 조회 |
+
+### 이미지 생성
+
+| 메서드 | 경로 | 설명 |
+|--------|------|------|
+| POST | `/api/generate-image` | 일기 내용 기반 AI 이미지 생성 |
+| GET | `/api/image-file/:filename` | 저장된 이미지 파일 서빙 |
+
+---
+
+## 폴더 구조
+
+```
+softwareThinkingProject/
+├── backend/
+│   ├── app.py            # Flask 앱 진입점
+│   ├── auth.py           # 회원가입/로그인 API
+│   ├── diaryCRUD.py      # 일기 CRUD API
+│   ├── imageGen.py       # AI 이미지 생성 API
+│   ├── emotioncolor.py   # 감정-색상 매핑
+│   ├── diary.db          # 일기 데이터베이스
+│   └── user.db           # 사용자 데이터베이스
+└── frontend/
+    ├── src/
+    │   ├── pages/        # 페이지 컴포넌트 (diary, register)
+    │   ├── component/    # 공통 컴포넌트 (header 등)
+    │   └── context/      # AuthContext
+    ├── vite.config.js
+    └── package.json
+```
+
+---
+
+## 트러블슈팅
+
+**프론트엔드가 실행되지 않을 때**
+- Node.js가 설치되어 있는지 확인 후 `npm install` 재실행
+
+**API 연결이 안 될 때**
+- 백엔드 서버(`python app.py`)가 실행 중인지 확인
+- 백엔드는 반드시 `backend/` 폴더 안에서 실행해야 DB 경로가 올바르게 잡힘
+
+**이미지가 생성되지 않을 때**
+- 인터넷 연결 확인 (Pollinations AI 외부 서비스 사용)
+- 이미지 생성은 최대 90초 소요될 수 있음
