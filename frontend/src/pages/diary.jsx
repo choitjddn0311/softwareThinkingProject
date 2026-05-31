@@ -596,14 +596,40 @@ const DiaryBook = () => {
   // 구성: 1(표지) + 1(공백) + 1(달력) + lastDate + 1(뒷표지) = lastDate + 4
   const needsPad = (lastDate + 4) % 2 !== 0;
 
+  // react-pageflip은 null children을 받으면 크래시 → 배열로 미리 계산
+  const diaryPages = Array.from({ length: lastDate }, (_, i) => i + 1).map(day => (
+    <DiaryPage
+      key={toDateStr(year, month, day)}
+      year={year}
+      month={month}
+      day={day}
+      isLeft={day % 2 === 1}
+      onGoToCalendar={handleGoToCalendar}
+      onSaved={refreshCalendar}
+    />
+  ));
+  if (needsPad) diaryPages.push(<BlankPage key="pad" />);
+
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center py-8 bg-gray-100">
 
-      {/* 월 표시 */}
-      <div className="flex items-center mb-6">
+      {/* 월 이동 컨트롤 */}
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={() => changeMonth(-1)}
+          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition-all"
+        >
+          <IoIosArrowBack size={14} />
+        </button>
         <span className="text-sm font-medium text-gray-500 w-24 text-center">
           {year}년 {month + 1}월
         </span>
+        <button
+          onClick={() => changeMonth(1)}
+          className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-white transition-all"
+        >
+          <IoIosArrowForward size={14} />
+        </button>
       </div>
 
       {/* 초기화 중에는 표지 이미지를 오버레이로 덮어 빈 화면 방지 */}
@@ -636,7 +662,7 @@ const DiaryBook = () => {
           onInit={() => setIsReady(true)}
         >
           <CoverPage username={user?.username} />
-          <BlankPage />
+          <BlankPage key="blank-start" />
           <CalendarPageComp
             year={year}
             month={month}
@@ -644,18 +670,7 @@ const DiaryBook = () => {
             titleMap={titleMap}
             onDayClick={handleDayClick}
           />
-          {Array.from({ length: lastDate }, (_, i) => i + 1).map(day => (
-            <DiaryPage
-              key={toDateStr(year, month, day)}
-              year={year}
-              month={month}
-              day={day}
-              isLeft={day % 2 === 1}
-              onGoToCalendar={handleGoToCalendar}
-              onSaved={refreshCalendar}
-            />
-          ))}
-          {needsPad ? <BlankPage /> : null}
+          {diaryPages}
           <BackCoverPage />
         </HTMLFlipBook>
       </div>
