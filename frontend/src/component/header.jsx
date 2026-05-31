@@ -12,7 +12,7 @@ const Header = () => {
     };
 
     return (
-        <header className="w-full h-16 flex justify-center items-center border-b border-gray-100">
+        <header className="w-full h-16 flex justify-center items-center bg-gray-100">
             <div className="w-[1200px] h-full flex justify-between items-center px-6">
 
                 <Link to='/'>

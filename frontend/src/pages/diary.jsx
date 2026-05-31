@@ -611,7 +611,7 @@ const DiaryBook = () => {
   if (needsPad) diaryPages.push(<BlankPage key="pad" />);
 
   return (
-    <div className="w-full min-h-screen flex flex-col items-center justify-center py-8 bg-gray-100">
+    <div className="w-full min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center py-8 bg-gray-100">
 
       {/* 월 이동 컨트롤 */}
       <div className="flex items-center gap-3 mb-6">
