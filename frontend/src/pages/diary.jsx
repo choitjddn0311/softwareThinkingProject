@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, forwardRef, useRef } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { IoIosArrowBack, IoIosArrowForward, IoIosCalendar } from 'react-icons/io';
+import { WiDaySunny, WiDayCloudy, WiCloudy, WiRain, WiSnow } from 'react-icons/wi';
 import diaryCoverImg from '../assets/img/diaryCover.jpeg';
 import diaryBackCoverImg from '../assets/img/diaryBackCover.jpeg';
 import { useAuth } from '../context/AuthContext';
@@ -16,6 +17,14 @@ const EMOTIONS      = [
   { value: 'annoyed',   label: '짜증남'  },
   { value: 'lethargic', label: '무기력함' },
 ];
+const WEATHERS = [
+  { value: 'sunny',        icon: WiDaySunny,  label: '맑음'    },
+  { value: 'partly_cloudy', icon: WiDayCloudy, label: '구름조금' },
+  { value: 'cloudy',       icon: WiCloudy,    label: '흐림'    },
+  { value: 'rainy',        icon: WiRain,      label: '비'      },
+  { value: 'snowy',        icon: WiSnow,      label: '눈'      },
+];
+
 const COLS  = 10;
 const ROWS  = 4;
 const TOTAL = COLS * ROWS;
@@ -166,13 +175,15 @@ const CalendarPageComp = forwardRef(({ year, month, colorMap, titleMap, onDayCli
 CalendarPageComp.displayName = 'CalendarPageComp';
 
 // ── 일기 페이지 (그림일기 형식) ───────────────────────
-const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref) => {
+const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSaved }, ref) => {
   const [mode,         setMode]         = useState('read');
   const [loadState,    setLoadState]    = useState('loading');
   const [form,         setForm]         = useState({ title: '', content: '', wakeTime: '', sleepTime: '', emotion: '' });
   const [saveStatus,   setSaveStatus]   = useState('');
   const [imageUrl,     setImageUrl]     = useState('');
   const [imageLoading, setImageLoading] = useState(false);
+  const [weather,      setWeather]      = useState('');
+  const [weatherLoading, setWeatherLoading] = useState(false);
 
   const dateStr  = toDateStr(year, month, day);
   const dayLabel = getDayLabel(year, month, day);
@@ -224,6 +235,36 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref)
     return () => { cancelled = true; };
   }, [dateStr]);
 
+  const WMO_MAP = (code) => {
+    if (code === 0 || code === 1)              return 'sunny';
+    if (code === 2)                            return 'partly_cloudy';
+    if (code === 3 || code === 45 || code === 48) return 'cloudy';
+    if (code >= 51 && code <= 67)             return 'rainy';
+    if (code >= 71 && code <= 77)             return 'snowy';
+    if (code >= 80 && code <= 82)             return 'rainy';
+    if (code === 85 || code === 86)           return 'snowy';
+    if (code >= 95)                           return 'rainy';
+    return 'sunny';
+  };
+
+  const handleEnterEdit = () => {
+    setMode('edit');
+    if (weather) return;
+    setWeatherLoading(true);
+    navigator.geolocation?.getCurrentPosition(
+      ({ coords }) => {
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.latitude}&longitude=${coords.longitude}&current=weather_code`)
+          .then(r => r.json())
+          .then(d => {
+            setWeather(WMO_MAP(d.current.weather_code));
+          })
+          .catch(() => {})
+          .finally(() => setWeatherLoading(false));
+      },
+      () => setWeatherLoading(false)
+    );
+  };
+
   const handleSave = async () => {
     if (!form.title.trim() || !form.content.trim()) {
       setSaveStatus('제목과 내용을 입력해주세요');
@@ -240,6 +281,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref)
       if (res.ok) {
         setLoadState('loaded');
         setSaveStatus('저장됨');
+        onSaved?.();
         setTimeout(() => { setSaveStatus(''); setMode('read'); }, 700);
 
         // 이미지 자동 생성 (백엔드가 실제 생성 완료까지 기다린 후 URL 반환)
@@ -293,14 +335,40 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref)
             달력
           </button>
         </div>
-        <div className="flex items-baseline gap-0.5 text-[11px]">
-          <span className="font-medium text-gray-700">{year}</span>
-          <span className="text-gray-300 text-[9px] mx-0.5">년</span>
-          <span className="font-medium text-gray-700">{pad(month + 1)}</span>
-          <span className="text-gray-300 text-[9px] mx-0.5">월</span>
-          <span className="font-medium text-gray-700">{pad(day)}</span>
-          <span className="text-gray-300 text-[9px] mx-0.5">일</span>
-          <span className="font-medium text-gray-600 ml-1">{dayLabel}요일</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-baseline gap-0.5 text-[11px]">
+            <span className="font-medium text-gray-700">{year}</span>
+            <span className="text-gray-300 text-[9px] mx-0.5">년</span>
+            <span className="font-medium text-gray-700">{pad(month + 1)}</span>
+            <span className="text-gray-300 text-[9px] mx-0.5">월</span>
+            <span className="font-medium text-gray-700">{pad(day)}</span>
+            <span className="text-gray-300 text-[9px] mx-0.5">일</span>
+            <span className="font-medium text-gray-600 ml-1">{dayLabel}요일</span>
+          </div>
+          {/* 날씨 아이콘 */}
+          {isEdit ? (
+            <div className="flex items-center gap-0.5">
+              {weatherLoading ? (
+                <span className="text-[9px] text-gray-300 animate-pulse">날씨 확인 중...</span>
+              ) : (
+                WEATHERS.map(({ value, icon: Icon, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setWeather(v => v === value ? '' : value)}
+                    title={label}
+                    className={`rounded p-0.5 transition-all ${weather === value ? 'text-sky-500' : 'text-gray-300 hover:text-gray-500'}`}
+                  >
+                    <Icon size={20} />
+                  </button>
+                ))
+              )}
+            </div>
+          ) : weather ? (
+            (() => {
+              const W = WEATHERS.find(w => w.value === weather);
+              return W ? <W.icon size={20} className="text-sky-400" title={W.label} /> : null;
+            })()
+          ) : null}
         </div>
         <div className="flex items-center gap-1.5">
           {loadState !== 'loading' && (
@@ -309,7 +377,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref)
             </span>
           )}
           {!isEdit ? (
-            <button onClick={() => setMode('edit')}
+            <button onClick={handleEnterEdit}
               className="text-[10px] px-2.5 py-1 text-gray-400 border border-gray-200 rounded hover:text-gray-700 hover:border-gray-400 transition-all">
               편집
             </button>
@@ -413,7 +481,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar }, ref)
                 loadState === 'empty' && !isEdit ? (
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-[10px] text-gray-300">아직 작성된 일기가 없어요</p>
-                    <button onClick={() => setMode('edit')}
+                    <button onClick={handleEnterEdit}
                       className="text-[10px] px-3 py-1.5 border border-gray-200 text-gray-400 rounded hover:border-gray-400 hover:text-gray-700 transition-all">
                       + 작성하기
                     </button>
@@ -470,7 +538,7 @@ const DiaryBook = () => {
   const month    = current.getMonth();
   const lastDate = getLastDate(year, month);
 
-  useEffect(() => {
+  const refreshCalendar = useCallback(() => {
     fetch('/api/calendar')
       .then(r => r.json())
       .then(data => {
@@ -480,6 +548,10 @@ const DiaryBook = () => {
         setTitleMap(tm);
       })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    refreshCalendar();
   }, [year, month]);
 
   // 달력에서 날짜 클릭 → 해당 일기 페이지로 이동
@@ -580,6 +652,7 @@ const DiaryBook = () => {
               day={day}
               isLeft={day % 2 === 1}
               onGoToCalendar={handleGoToCalendar}
+              onSaved={refreshCalendar}
             />
           ))}
           {needsPad ? <BlankPage /> : null}
