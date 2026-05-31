@@ -15,3 +15,6 @@ backend/diary_images/
 
 #env
 .env
+
+# 제출 문서
+LLM_활용기록.txt
