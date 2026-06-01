@@ -41,6 +41,53 @@ def translate_to_english(text):
         return text
 
 
+def to_action_scene(english_text):
+    """번역된 문장을 이미지 생성에 적합한 행동 중심 묘사로 변환"""
+    # 1인칭 주어 제거 및 소문자 정리
+    text = english_text.strip().rstrip('.')
+    first_person = ['I ', 'I\'m ', 'I am ', 'We ', 'We\'re ', 'We are ']
+    for fp in first_person:
+        if text.startswith(fp):
+            text = text[len(fp):]
+            break
+
+    # 과거형 → 현재진행형 변환 (주요 동사)
+    past_to_ing = {
+        'went to': 'going to', 'went': 'going',
+        'ate': 'eating', 'eat': 'eating',
+        'played': 'playing', 'play': 'playing',
+        'studied': 'studying', 'study': 'studying',
+        'watched': 'watching', 'watch': 'watching',
+        'ran': 'running', 'run': 'running',
+        'swam': 'swimming', 'swim': 'swimming',
+        'drew': 'drawing', 'draw': 'drawing',
+        'read': 'reading',
+        'wrote': 'writing', 'write': 'writing',
+        'met': 'meeting', 'meet': 'meeting',
+        'visited': 'visiting', 'visit': 'visiting',
+        'cried': 'crying', 'cry': 'crying',
+        'laughed': 'laughing', 'laugh': 'laughing',
+        'slept': 'sleeping', 'sleep': 'sleeping',
+        'had': 'having', 'have': 'having',
+        'made': 'making', 'make': 'making',
+        'bought': 'buying', 'buy': 'buying',
+        'received': 'receiving',
+        'enjoyed': 'enjoying', 'enjoy': 'enjoying',
+        'was happy': 'being happy',
+        'was sad': 'being sad',
+        'was tired': 'being tired',
+        'was excited': 'being excited',
+        'felt': 'feeling',
+    }
+    text_lower = text.lower()
+    for past, ing in past_to_ing.items():
+        if past in text_lower:
+            text = text_lower.replace(past, ing, 1)
+            break
+
+    return f"a Korean child {text}"
+
+
 # 저장된 이미지 파일 서빙
 @image_bp.route('/api/image-file/<filename>')
 def serve_image_file(filename):
@@ -64,6 +111,8 @@ def generate_image():
     print(f"[번역 중...] {korean_text}")
     english_scene = translate_to_english(korean_text)
     print(f"[번역 완료] {english_scene}")
+    action_scene = to_action_scene(english_scene)
+    print(f"[행동 변환] {action_scene}")
 
     seed = random.randint(1, 99999)
     prompt = (
@@ -76,7 +125,7 @@ def generate_image():
         f"chunky simple human figure facing forward with round face and big smile, "
         f"symbolic objects drawn large and simple (sun, tree, food, etc), "
         f"no empty white space — every area filled with bright saturated crayon color, "
-        f"scene: {english_scene}, "
+        f"scene: {action_scene}, "
         f"character showing {expression}, "
         f"vivid primary colors: red, yellow, blue, green, orange, "
         f"scanned paper texture, hand-drawn diary page style, "
