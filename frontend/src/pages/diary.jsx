@@ -14,8 +14,9 @@ const EMOTIONS      = [
   { value: 'happy',     label: '행복함'  },
   { value: 'sad',       label: '슬픔'    },
   { value: 'angry',     label: '화남'    },
-  { value: 'annoyed',   label: '짜증남'  },
   { value: 'lethargic', label: '무기력함' },
+  {value: 'funny', label: '신남'},
+  { value: 'love' , label:'설레임'}
 ];
 const WEATHERS = [
   { value: 'sunny',        icon: WiDaySunny,  label: '맑음'    },
@@ -124,7 +125,8 @@ const CalendarPageComp = forwardRef(({ year, month, colorMap, titleMap, onDayCli
         <h2 className="text-base font-light text-gray-700">{year}년 {month + 1}월</h2>
       </div>
 
-      <div className="flex-1 px-3 pt-2 pb-2 flex flex-col min-h-0">
+      <div className="flex-1 px-3 flex flex-col">
+        <div className="my-auto">
         <div className="grid grid-cols-7 mb-1">
           {DAY_LABELS.map((d, i) => (
             <div
@@ -137,7 +139,7 @@ const CalendarPageComp = forwardRef(({ year, month, colorMap, titleMap, onDayCli
           ))}
         </div>
 
-        <div className="grid grid-cols-7 border-t border-l border-gray-100 flex-1">
+        <div className="grid grid-cols-7 border-t border-l border-gray-100" style={{ gridAutoRows: '60px' }}>
           {Array.from({ length: firstDay }).map((_, i) => (
             <div key={`e${i}`} className="border-b border-r border-gray-100" />
           ))}
@@ -167,6 +169,7 @@ const CalendarPageComp = forwardRef(({ year, month, colorMap, titleMap, onDayCli
               </div>
             );
           })}
+        </div>
         </div>
       </div>
     </div>

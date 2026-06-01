@@ -16,9 +16,9 @@ os.makedirs(IMAGE_DIR, exist_ok=True)
 EMOTION_EXPRESSIONS = {
     'happy':     'happy smiling expression, cheerful',
     'sad':       'sad tearful expression, gloomy',
-    'angry':     'angry pouting expression, frustrated',
-    'annoyed':   'annoyed frowning expression, irritated',
     'lethargic': 'sleepy drowsy expression, tired',
+    'funny':     'excited joyful expression, energetic',
+    'love':      'blushing heart eyes expression, romantic',
 }
 
 def translate_to_english(text):
@@ -67,10 +67,20 @@ def generate_image():
 
     seed = random.randint(1, 99999)
     prompt = (
-        f"child's crayon drawing, drawn by a kindergartener, "
-        f"naive childlike art style, simple rough colorful lines, "
-        f"scene: {english_scene}, character with {expression}, "
-        f"hand-drawn diary illustration"
+        f"Korean child's crayon drawing diary illustration, "
+        f"drawn by a 6-7 year old Korean kindergartener, "
+        f"heavily filled with thick crayon colors, "
+        f"NO outlines dominant style — color fills everything, "
+        f"background completely covered: blue sky on top, green or brown ground on bottom, "
+        f"naive Korean childlike art, bold flat color blocks, "
+        f"chunky simple human figure facing forward with round face and big smile, "
+        f"symbolic objects drawn large and simple (sun, tree, food, etc), "
+        f"no empty white space — every area filled with bright saturated crayon color, "
+        f"scene: {english_scene}, "
+        f"character showing {expression}, "
+        f"vivid primary colors: red, yellow, blue, green, orange, "
+        f"scanned paper texture, hand-drawn diary page style, "
+        f"Korean summer vacation diary aesthetic"
     )
 
     encoded = urllib.parse.quote(prompt)
