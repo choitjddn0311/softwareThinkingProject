@@ -1,10 +1,10 @@
 EMOTION_COLORS = {
-    "happy":"#ffea00",
-    "sad": "#0a2472",
-    "blue": "#778da9",
-    "angry": "#d62828",
-    "annoyed": "#008000",
-    "meh": "#bfc3ba"
+    "happy":"#fcf300",
+    "sad": "#a3c4f3",
+    "angry": "#e01e37",
+    "meh": "#001f54",
+    "love": "#ff69eb",
+    "funny": "#80b918",
 }
 
 def get_color(emotion):
