@@ -7,16 +7,18 @@
 - 회원가입 / 로그인 / 로그아웃
 - 날짜별 일기 작성 (제목, 내용, 감정, 기상·취침 시간)
 - 일기 저장 시 AI 그림 자동 생성 (Pollinations AI)
-- 감정별 색상으로 표시되는 달력 뷰
+- 편집 시작 시 현재 위치 날씨 자동 연동 (Open-Meteo API)
+- 감정별 색상으로 표시되는 달력 뷰 (저장 즉시 반영)
 - 책 페이지 넘기기 애니메이션 UI
 
 ## 기술 스택
 
 | 구분 | 사용 기술 |
 |------|-----------|
-| Frontend | React 19, Vite, Tailwind CSS, react-pageflip |
+| Frontend | React 19, Vite, Tailwind CSS, react-pageflip, react-icons |
 | Backend | Python, Flask, SQLite |
 | 이미지 생성 | Pollinations AI, Google Translate (무료 엔드포인트) |
+| 날씨 | Open-Meteo API (무료, API 키 불필요) |
 
 ---
 
@@ -109,8 +111,8 @@ softwareThinkingProject/
 │   ├── diaryCRUD.py      # 일기 CRUD API
 │   ├── imageGen.py       # AI 이미지 생성 API
 │   ├── emotioncolor.py   # 감정-색상 매핑
-│   ├── diary.db          # 일기 데이터베이스
-│   └── user.db           # 사용자 데이터베이스
+│   ├── diary.db          # 일기 데이터베이스 (최초 실행 시 자동 생성)
+│   └── user.db           # 사용자 데이터베이스 (최초 실행 시 자동 생성)
 └── frontend/
     ├── src/
     │   ├── pages/        # 페이지 컴포넌트 (diary, register)
@@ -134,3 +136,7 @@ softwareThinkingProject/
 **이미지가 생성되지 않을 때**
 - 인터넷 연결 확인 (Pollinations AI 외부 서비스 사용)
 - 이미지 생성은 최대 90초 소요될 수 있음
+
+**날씨가 자동으로 설정되지 않을 때**
+- 브라우저 위치 권한 허용 여부 확인 (편집 버튼 클릭 시 위치 권한 요청)
+- 위치 권한 거부 시 날씨 아이콘을 수동으로 선택할 수 있음
