@@ -6,19 +6,21 @@ import { BsStars, BsCalendarHeart, BsCloudSun, BsBook } from 'react-icons/bs';
 const AuthPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
+  const [mode, setMode] = useState('login');
 
   const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
 
+  // 입력값 변경 시 에러/성공 메시지 초기화
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
     setError('');
     setSuccess('');
   };
 
+  // 로그인/회원가입 모드 전환 시 폼 초기화
   const switchMode = (next) => {
     setMode(next);
     setForm({ username: '', email: '', password: '', confirm: '' });
@@ -26,6 +28,7 @@ const AuthPage = () => {
     setSuccess('');
   };
 
+  // 로그인 또는 회원가입 요청 처리
   const handleSubmit = async () => {
     setError('');
     setSuccess('');
@@ -99,7 +102,7 @@ const AuthPage = () => {
   return (
     <div className="w-full h-screen flex">
 
-      {/* 좌측 — 브랜드 패널 */}
+      {/* 좌측 — 브랜드 + 핵심 기능 소개 패널 */}
       <div className="hidden md:flex flex-col justify-between w-[420px] flex-shrink-0 border-r border-gray-100 px-14 py-14 bg-gray-50">
         <div>
           <div className="w-7 h-7 rounded-full bg-gray-800 mb-10" />
@@ -111,7 +114,6 @@ const AuthPage = () => {
           </p>
         </div>
 
-        {/* 핵심 기능 소개 */}
         <div className="space-y-3">
           {[
             { icon: BsStars,         title: 'AI 그림 자동 생성', desc: '일기를 저장하면 내용을 바탕으로 AI가 그림일기 삽화를 자동으로 그려줘요' },
@@ -133,7 +135,7 @@ const AuthPage = () => {
         </div>
       </div>
 
-      {/* 우측 — 폼 패널 */}
+      {/* 우측 — 로그인 / 회원가입 폼 */}
       <div className="flex-1 flex flex-col items-center justify-center px-8">
         <div className="w-full max-w-sm">
 
@@ -162,7 +164,6 @@ const AuthPage = () => {
           </div>
 
           <div className="space-y-3">
-            {/* 사용자명 (회원가입만) */}
             {mode === 'register' && (
               <div>
                 <label className="block text-xs text-gray-400 mb-1.5 tracking-wide">사용자명</label>
@@ -177,7 +178,6 @@ const AuthPage = () => {
               </div>
             )}
 
-            {/* 이메일 */}
             <div>
               <label className="block text-xs text-gray-400 mb-1.5 tracking-wide">이메일</label>
               <input
@@ -191,7 +191,6 @@ const AuthPage = () => {
               />
             </div>
 
-            {/* 비밀번호 */}
             <div>
               <label className="block text-xs text-gray-400 mb-1.5 tracking-wide">비밀번호</label>
               <input
@@ -205,7 +204,6 @@ const AuthPage = () => {
               />
             </div>
 
-            {/* 비밀번호 확인 (회원가입만) */}
             {mode === 'register' && (
               <div>
                 <label className="block text-xs text-gray-400 mb-1.5 tracking-wide">비밀번호 확인</label>
@@ -222,7 +220,6 @@ const AuthPage = () => {
             )}
           </div>
 
-          {/* 에러 / 성공 메시지 */}
           {error && (
             <p className="mt-4 text-xs text-rose-500 text-center">{error}</p>
           )}
@@ -230,7 +227,6 @@ const AuthPage = () => {
             <p className="mt-4 text-xs text-emerald-500 text-center">{success}</p>
           )}
 
-          {/* 제출 버튼 */}
           <button
             onClick={handleSubmit}
             disabled={loading}
@@ -246,7 +242,6 @@ const AuthPage = () => {
             {loading ? '처리 중...' : mode === 'login' ? '로그인' : '가입하기'}
           </button>
 
-          {/* 하단 링크 */}
           <p className="mt-6 text-center text-xs text-gray-400">
             {mode === 'login' ? (
               <>계정이 없으신가요?{' '}

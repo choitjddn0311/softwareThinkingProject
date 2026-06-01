@@ -192,9 +192,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
   const dayLabel = getDayLabel(year, month, day);
   const isEdit   = mode === 'edit';
 
-  // page-flip 라이브러리는 native mousedown을 .stf__block에 직접 등록하기 때문에
-  // React synthetic stopPropagation으로는 막을 수 없음.
-  // 편집 모드일 때 페이지 루트 div에 native 리스너를 붙여 버블링을 차단.
+  // 편집 모드에서 페이지 넘김 방지 — react-pageflip은 native 이벤트를 직접 등록하므로 native 리스너로 차단
   const localRef = useRef(null);
   const mergedRef = useCallback((node) => {
     localRef.current = node;
@@ -287,7 +285,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
         onSaved?.();
         setTimeout(() => { setSaveStatus(''); setMode('read'); }, 700);
 
-        // 이미지 자동 생성 (백엔드가 실제 생성 완료까지 기다린 후 URL 반환)
+        // 일기 저장 후 AI 이미지 자동 생성
         setImageLoading(true);
         setImageUrl('');
         fetch('/api/generate-image', {
@@ -299,10 +297,9 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
           .then(imgData => {
             if (!imgData.image_url) { setImageLoading(false); return; }
             const url = imgData.image_url;
-            // 백엔드가 이미지 생성 완료를 확인했으므로 바로 표시
             setImageUrl(url);
             setImageLoading(false);
-            // 이미지 URL만 저장 (일기 내용 덮어쓰기 방지)
+            // 이미지 URL만 PATCH — 일기 내용 stale closure 덮어쓰기 방지
             fetch(`/api/diaries/date/${dateStr}/image`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
@@ -460,13 +457,11 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
             <p className="text-[10px] text-gray-300">불러오는 중...</p>
           ) : (
             <>
-              {/* imageLoading=true 동안 loading 텍스트 표시 */}
               {imageLoading && (
                 <div className="absolute inset-0 flex items-center justify-center z-10 bg-white">
                   <p className="text-[10px] text-gray-400 animate-pulse">✏️ 그림 그리는 중...</p>
                 </div>
               )}
-              {/* imageUrl 있으면 항상 img 렌더 (loading 중엔 invisible로 DOM에 존재 → onLoad 신호 가능) */}
               {imageUrl ? (
                 <img
                   key={imageUrl}
@@ -557,8 +552,7 @@ const DiaryBook = () => {
     refreshCalendar();
   }, [year, month]);
 
-  // 달력에서 날짜 클릭 → 해당 일기 페이지로 이동
-  // 페이지 인덱스: 0=표지, 1=공백, 2=달력, 3=1일, 4=2일, ...
+  // 달력 날짜 클릭 시 해당 일기 페이지로 이동 (인덱스: 0=표지, 1=공백, 2=달력, 3~=일기)
   const handleDayClick = (day) => {
     bookRef.current?.pageFlip().flip(day + 2);
   };
@@ -572,7 +566,7 @@ const DiaryBook = () => {
     setCurrent(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
   };
 
-  // onInit이 발화하지 않는 경우를 대비한 폴백: 1초 후 강제로 표시
+  // onInit 미발화 대비 1초 폴백
   useEffect(() => {
     const t = setTimeout(() => setIsReady(true), 1000);
     return () => clearTimeout(t);
@@ -595,11 +589,10 @@ const DiaryBook = () => {
     return () => EVENTS.forEach(ev => el.removeEventListener(ev, block, true));
   }, [isReady]);
 
-  // showCover=true 사용 시 총 페이지 수는 짝수여야 함
-  // 구성: 1(표지) + 1(공백) + 1(달력) + lastDate + 1(뒷표지) = lastDate + 4
+  // showCover=true 시 총 페이지 수는 짝수여야 함 → 홀수이면 빈 페이지 추가
   const needsPad = (lastDate + 4) % 2 !== 0;
 
-  // react-pageflip은 null children을 받으면 크래시 → 배열로 미리 계산
+  // react-pageflip에 null children 전달 시 크래시 → 배열로 미리 계산
   const diaryPages = Array.from({ length: lastDate }, (_, i) => i + 1).map(day => (
     <DiaryPage
       key={toDateStr(year, month, day)}
@@ -635,7 +628,7 @@ const DiaryBook = () => {
         </button>
       </div>
 
-      {/* 초기화 중에는 표지 이미지를 오버레이로 덮어 빈 화면 방지 */}
+      {/* 책 영역 — 초기화 중 빈 화면 방지를 위해 표지 오버레이 표시 */}
       <div className="relative" ref={bookContainerRef}>
         {!isReady && (
           <div
