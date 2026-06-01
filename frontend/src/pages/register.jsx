@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { BsStars, BsCalendarHeart, BsCloudSun, BsBook } from 'react-icons/bs';
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -89,7 +90,7 @@ const AuthPage = () => {
 
   const inputClass = `
     w-full h-11 px-4 text-sm bg-transparent
-    border border-gray-200 rounded-lg
+    border border-gray-200 rounded-md
     text-gray-800 placeholder-gray-400
     focus:outline-none focus:border-gray-500
     transition-colors duration-150
@@ -103,28 +104,29 @@ const AuthPage = () => {
         <div>
           <div className="w-7 h-7 rounded-full bg-gray-800 mb-10" />
           <h1 className="text-3xl font-semibold text-gray-800 leading-snug tracking-tight">
-            나만의<br />일기장
+            감정 그림일기
           </h1>
           <p className="mt-4 text-sm text-gray-400 leading-relaxed">
-            하루의 기억을 색으로<br />기록하는 공간
+            오늘의 감정을 기록하면<br />AI가 그림으로 완성해드려요
           </p>
         </div>
 
-        {/* 미니 달력 미리보기 */}
-        <div className="space-y-2">
+        {/* 핵심 기능 소개 */}
+        <div className="space-y-3">
           {[
-            { date: '5월 26일', color: '#D1FAE5', title: '봄 산책' },
-            { date: '5월 22일', color: '#FEF3C7', title: '카페 작업' },
-            { date: '5월 18일', color: '#E0E7FF', title: '영화 관람' },
-          ].map(({ date, color, title }) => (
+            { icon: BsStars,         title: 'AI 그림 자동 생성', desc: '일기를 저장하면 내용을 바탕으로 AI가 그림일기 삽화를 자동으로 그려줘요' },
+            { icon: BsCalendarHeart, title: '감정 달력',         desc: '매일 선택한 감정이 색으로 달력에 표시돼 한눈에 감정 흐름을 확인할 수 있어요' },
+            { icon: BsCloudSun,      title: '날씨 자동 연동',    desc: '일기 작성 시 현재 위치의 날씨를 자동으로 불러와 기록해줘요' },
+            { icon: BsBook,          title: '책 넘기기 UI',      desc: '실제 일기장처럼 페이지를 넘기며 날짜별 일기를 살펴볼 수 있어요' },
+          ].map(({ icon: Icon, title, desc }) => (
             <div
-              key={date}
-              className="flex items-center gap-3 bg-white rounded-xl px-3 py-3 border border-gray-100"
+              key={title}
+              className="flex items-start gap-3 bg-white rounded-md px-4 py-3 border border-gray-200"
             >
-              <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+              <Icon size={18} className="text-gray-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-xs text-gray-400">{date}</p>
                 <p className="text-sm font-medium text-gray-700">{title}</p>
+                <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{desc}</p>
               </div>
             </div>
           ))}
@@ -233,7 +235,7 @@ const AuthPage = () => {
             onClick={handleSubmit}
             disabled={loading}
             className={`
-              mt-6 w-full h-11 rounded-lg text-sm font-medium
+              mt-6 w-full h-11 rounded-md text-sm font-medium
               transition-all duration-150
               ${loading
                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
