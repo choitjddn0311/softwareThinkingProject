@@ -217,6 +217,40 @@ def read_diary_by_date(date):
     return jsonify([row_to_dict(r) for r in rows]), 200
 
 
+# [READ] 월별 감정 집계 — 가장 많이 느낀 감정 반환
+@diary_bp.route('/api/emotions/summary/<int:year>/<int:month>', methods=['GET'])
+def get_emotion_summary(year, month):
+    uid = current_user_id()
+    if not uid:
+        return jsonify({"emotion": None}), 200
+
+    date_prefix = f"{year}-{str(month).zfill(2)}"
+    with get_db() as conn:
+        rows = conn.execute(
+            "SELECT emotion FROM diaries WHERE user_id=? AND date LIKE ?",
+            (uid, f"{date_prefix}-%")
+        ).fetchall()
+
+    # 리스트 컴프리헨션으로 감정 목록 추출
+    emotion_list = [r["emotion"] for r in rows if r["emotion"]]
+
+    if not emotion_list:
+        return jsonify({"emotion": None}), 200
+
+    # 딕셔너리로 감정별 횟수 집계
+    emotion_count = {}
+    for emotion in emotion_list:
+        emotion_count[emotion] = emotion_count.get(emotion, 0) + 1
+
+    top_emotion = max(emotion_count, key=emotion_count.get)
+    return jsonify({
+        "emotion":  top_emotion,
+        "count":    emotion_count[top_emotion],
+        "total":    len(emotion_list),
+        "counts":   emotion_count,
+    }), 200
+
+
 # [READ] 캘린더용 색상 데이터
 @diary_bp.route('/api/calendar', methods=['GET'])
 def get_calendar_colors():

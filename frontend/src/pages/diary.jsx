@@ -108,11 +108,45 @@ const BlankPage = forwardRef((_, ref) => (
 ));
 BlankPage.displayName = 'BlankPage';
 
+// 감정별 색상 (backend emotioncolor.py와 동기화)
+const EMOTION_COLORS = {
+  happy:     '#fcf300',
+  funny:     '#80b918',
+  love:      '#ff69eb',
+  sad:       '#a3c4f3',
+  lethargic: '#bfc3ba',
+};
+
+// 감정별 위로/축하 메시지
+const EMOTION_MESSAGES = {
+  happy:     { label: '행복함',   message: '이번 달은 행복한 순간이 가득했네요! 앞으로도 그런 날들이 계속되길 바랍니다.' },
+  funny:     { label: '신남',     message: '신나는 한 달을 보냈군요! 그 에너지를 앞으로도 유지하세요.' },
+  love:      { label: '설레임',   message: '설레는 감정이 넘친 한 달이었네요. 소중한 감정을 오래 간직하세요.' },
+  sad:       { label: '슬픔',     message: '많이 힘드셨군요. 힘든 시간이 지나면 더 빛나는 날이 올 거예요.' },
+  lethargic: { label: '무기력함', message: '지치고 힘든 한 달이었군요. 충분히 쉬어가도 괜찮아요.' },
+};
+
 // ── 달력 페이지 ───────────────────────────────────────
 const CalendarPageComp = forwardRef(({ year, month, colorMap, titleMap, onDayClick }, ref) => {
   const firstDay = getFirstDay(year, month);
   const lastDate = getLastDate(year, month);
   const today    = new Date();
+
+  const [showSummary,   setShowSummary]   = useState(false);
+  const [summaryData,   setSummaryData]   = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+
+  const handleShowSummary = () => {
+    if (showSummary) { setShowSummary(false); return; }
+    setSummaryLoading(true);
+    fetch(`/api/emotions/summary/${year}/${month + 1}`)
+      .then(r => r.json())
+      .then(data => { setSummaryData(data); setShowSummary(true); })
+      .catch(() => {})
+      .finally(() => setSummaryLoading(false));
+  };
+
+  const summaryInfo = summaryData?.emotion ? EMOTION_MESSAGES[summaryData.emotion] : null;
 
   return (
     <div
@@ -171,6 +205,63 @@ const CalendarPageComp = forwardRef(({ year, month, colorMap, titleMap, onDayCli
           })}
         </div>
         </div>
+      </div>
+
+      {/* 이달의 감정 요약 */}
+      <div className="px-4 pb-3 pt-2 flex-shrink-0">
+        <button
+          onClick={handleShowSummary}
+          className="w-full text-[9px] py-1.5 text-gray-400 border border-gray-100 rounded hover:bg-gray-50 hover:text-gray-600 transition-all"
+        >
+          {summaryLoading ? '확인 중...' : showSummary ? '닫기' : '이달의 가장 많이 느낀 감정 보기'}
+        </button>
+        {showSummary && (
+          <div
+            className="mt-2 px-3 py-2.5 rounded text-center"
+            style={{
+              backgroundColor: summaryData?.emotion ? `${EMOTION_COLORS[summaryData.emotion]}30` : '#f9fafb',
+              border: `1px solid ${summaryData?.emotion ? `${EMOTION_COLORS[summaryData.emotion]}80` : '#f3f4f6'}`,
+            }}
+          >
+            {summaryData?.emotion ? (
+              <>
+                <p className="text-[9px] text-gray-400 mb-2">
+                  이번 달 총 <span className="font-medium text-gray-600">{summaryData.total}개</span>의 일기
+                </p>
+                {/* 감정별 통계 바 */}
+                <div className="space-y-1.5 mb-2.5">
+                  {Object.entries(summaryData.counts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([emotion, count]) => {
+                      const info = EMOTION_MESSAGES[emotion];
+                      const color = EMOTION_COLORS[emotion] || '#e5e7eb';
+                      const pct = Math.round((count / summaryData.total) * 100);
+                      return (
+                        <div key={emotion}>
+                          <div className="flex justify-between items-center mb-0.5">
+                            <span className="text-[9px] text-gray-600">{info?.label || emotion}</span>
+                            <span className="text-[9px] text-gray-400">{count}회 ({pct}%)</span>
+                          </div>
+                          <div className="w-full bg-gray-100 rounded-full h-1.5">
+                            <div
+                              className="h-1.5 rounded-full transition-all duration-500"
+                              style={{ width: `${pct}%`, backgroundColor: color }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+                <p className="text-[9px] font-medium text-gray-600 mb-0.5">
+                  이달의 감정: <span className="text-gray-800">'{summaryInfo?.label}'</span>
+                </p>
+                <p className="text-[9px] text-gray-400 leading-relaxed">{summaryInfo?.message}</p>
+              </>
+            ) : (
+              <p className="text-[9px] text-gray-400">이번 달 작성된 일기가 없어요.</p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -291,7 +382,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
         fetch('/api/generate-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: form.content, emotion: form.emotion, title: form.title }),
+          body: JSON.stringify({ content: form.content, emotion: form.emotion, title: form.title, weather }),
         })
           .then(r => r.json())
           .then(imgData => {

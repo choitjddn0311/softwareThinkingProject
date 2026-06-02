@@ -21,6 +21,14 @@ EMOTION_EXPRESSIONS = {
     'love':      'blushing heart eyes expression, romantic',
 }
 
+WEATHER_EXPRESSIONS = {
+    'sunny':        'bright sunny day, clear blue sky, shining sun',
+    'partly_cloudy': 'partly cloudy sky, some clouds and sunshine',
+    'cloudy':       'overcast cloudy sky, grey clouds',
+    'rainy':        'rainy day, raindrops falling, puddles on ground',
+    'snowy':        'snowy day, snowflakes falling, white snow on ground',
+}
+
 def translate_to_english(text):
     """Google Translate 무료 엔드포인트로 한국어 → 영어 번역 (API 키 불필요)"""
     try:
@@ -103,8 +111,10 @@ def generate_image():
     emotion = (data.get('emotion') or '').strip()
     title   = (data.get('title')   or '').strip()
     content = (data.get('content') or '').strip()
+    weather = (data.get('weather') or '').strip()
 
-    expression = EMOTION_EXPRESSIONS.get(emotion, 'neutral expression')
+    expression      = EMOTION_EXPRESSIONS.get(emotion, 'neutral expression')
+    weather_scene   = WEATHER_EXPRESSIONS.get(weather, '')
 
     # 한국어 일기 내용 → 영어 번역
     korean_text = f"{title}. {content}" if title and content else title or content or 'daily life'
@@ -126,6 +136,7 @@ def generate_image():
         f"symbolic objects drawn large and simple (sun, tree, food, etc), "
         f"no empty white space — every area filled with bright saturated crayon color, "
         f"scene: {action_scene}, "
+        f"weather: {weather_scene}, " if weather_scene else ""
         f"character showing {expression}, "
         f"vivid primary colors: red, yellow, blue, green, orange, "
         f"scanned paper texture, hand-drawn diary page style, "
