@@ -13,11 +13,11 @@ const Header = () => {
 
     return (
         <header className="w-full h-16 flex justify-center items-center bg-gray-100">
-            <div className="w-[1200px] h-full flex justify-between items-center px-6">
+            <div className="w-[1200px] h-full flex justify-end items-center px-6">
 
-                <Link to='/'>
+                {/* <Link to='/'>
                     <img src={Logo} alt="logo" width={40} height={40} />
-                </Link>
+                </Link> */}
 
                 <div className="flex items-center gap-1">
 
