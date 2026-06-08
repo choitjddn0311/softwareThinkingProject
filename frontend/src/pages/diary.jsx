@@ -276,6 +276,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
   const [saveStatus,   setSaveStatus]   = useState('');
   const [imageUrl,     setImageUrl]     = useState('');
   const [imageLoading, setImageLoading] = useState(false);
+  const [imageError,   setImageError]   = useState('');
   const [weather,      setWeather]      = useState('');
   const [weatherLoading, setWeatherLoading] = useState(false);
 
@@ -308,6 +309,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
     (async () => {
       setLoadState('loading');
       setMode('read');
+      setImageError('');
       try {
         const r = await fetch(`/api/diaries/date/${dateStr}`);
         const d = await r.json();
@@ -379,6 +381,7 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
         // 일기 저장 후 AI 이미지 자동 생성
         setImageLoading(true);
         setImageUrl('');
+        setImageError('');
         fetch('/api/generate-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -386,7 +389,11 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
         })
           .then(r => r.json())
           .then(imgData => {
-            if (!imgData.image_url) { setImageLoading(false); return; }
+            if (imgData.error || !imgData.image_url) {
+              setImageError(imgData.error || '이미지 생성에 실패했습니다');
+              setImageLoading(false);
+              return;
+            }
             const url = imgData.image_url;
             setImageUrl(url);
             setImageLoading(false);
@@ -397,7 +404,10 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
               body: JSON.stringify({ imageUrl: url }),
             });
           })
-          .catch(() => setImageLoading(false));
+          .catch(() => {
+            setImageError('이미지 생성 중 오류가 발생했습니다');
+            setImageLoading(false);
+          });
       } else {
         setSaveStatus(result.error || '저장 실패');
         setTimeout(() => setSaveStatus(''), 2000);
@@ -564,10 +574,15 @@ const DiaryPage = forwardRef(({ year, month, day, isLeft, onGoToCalendar, onSave
                   onError={() => {
                     setImageUrl('');
                     setImageLoading(false);
+                    setImageError('이미지를 불러올 수 없습니다');
                   }}
                 />
               ) : !imageLoading ? (
-                loadState === 'empty' && !isEdit ? (
+                imageError ? (
+                  <div className="flex flex-col items-center gap-1 px-4 text-center">
+                    <p className="text-[10px] text-rose-400">⚠ {imageError}</p>
+                  </div>
+                ) : loadState === 'empty' && !isEdit ? (
                   <div className="flex flex-col items-center gap-2">
                     <p className="text-[10px] text-gray-300">아직 작성된 일기가 없어요</p>
                     <button onClick={handleEnterEdit}
