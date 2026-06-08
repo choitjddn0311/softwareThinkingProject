@@ -6,7 +6,7 @@
 
 - 회원가입 / 로그인 / 로그아웃
 - 날짜별 일기 작성 (제목, 내용, 감정, 기상·취침 시간)
-- 일기 저장 시 AI 그림 자동 생성 (Pollinations AI)
+- 일기 저장 시 AI 그림 자동 생성 (Hugging Face FLUX.1-schnell)
 - 편집 시작 시 현재 위치 날씨 자동 연동 (Open-Meteo API)
 - 감정별 색상으로 표시되는 달력 뷰 (저장 즉시 반영)
 - 책 페이지 넘기기 애니메이션 UI
@@ -17,7 +17,7 @@
 |------|-----------|
 | Frontend | React 19, Vite, Tailwind CSS, react-pageflip, react-icons |
 | Backend | Python, Flask, SQLite |
-| 이미지 생성 | Pollinations AI, Google Translate (무료 엔드포인트) |
+| 이미지 생성 | Hugging Face Inference API (FLUX.1-schnell), Google Translate (무료 엔드포인트) |
 | 날씨 | Open-Meteo API (무료, API 키 불필요) |
 
 ---
@@ -28,6 +28,15 @@
 
 - [Node.js](https://nodejs.org/) 설치 (v18 이상 권장)
 - [Python](https://www.python.org/) 설치 (v3.10 이상 권장)
+- [Hugging Face](https://huggingface.co/) 계정 및 API 토큰 발급 (무료)
+
+프로젝트 루트에 `.env` 파일을 생성하고 아래 내용을 추가합니다:
+
+```
+HUGGING_FACE_API_KEY=hf_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+> Hugging Face 토큰은 [Settings → Access Tokens](https://huggingface.co/settings/tokens) 에서 **Read** 권한으로 발급받을 수 있습니다.
 
 ---
 
@@ -38,7 +47,7 @@
 cd backend
 
 # 2. 필요 패키지 설치
-pip install flask flask-cors
+pip install flask flask-cors python-dotenv requests
 
 # 3. 서버 실행
 python app.py
@@ -134,8 +143,9 @@ softwareThinkingProject/
 - 백엔드는 반드시 `backend/` 폴더 안에서 실행해야 DB 경로가 올바르게 잡힘
 
 **이미지가 생성되지 않을 때**
-- 인터넷 연결 확인 (Pollinations AI 외부 서비스 사용)
-- 이미지 생성은 최대 90초 소요될 수 있음
+- 루트 디렉토리에 `.env` 파일이 있고 `HUGGING_FACE_API_KEY`가 올바르게 설정되어 있는지 확인
+- 인터넷 연결 확인 (Hugging Face 외부 서비스 사용)
+- "모델 로딩 중" 메시지가 뜨면 잠시 후 다시 저장 (최초 요청 시 모델 워밍업 소요)
 
 **날씨가 자동으로 설정되지 않을 때**
 - 브라우저 위치 권한 허용 여부 확인 (편집 버튼 클릭 시 위치 권한 요청)
